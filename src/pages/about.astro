@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import Layout from '~/layouts/PageLayout.astro';
 import PageIntro from '~/components/torpedo/PageIntro.astro';
 import Specs from '~/components/torpedo/Specs.astro';
+import Team from '~/components/torpedo/Team.astro';
 import closeUp from '~/assets/images/torpedo/glenville-999-1903.jpg';
 import { years } from '~/car';
 import { photoSource } from '~/site';
@@ -94,6 +95,13 @@ const metadata = {
       </figure>
     </div>
   </section>
+
+  <section class="band" id="team">
+    <div class="wrap">
+      <h2 class="title team-title">The team</h2>
+      <Team />
+    </div>
+  </section>
 </Layout>
 
 <style>
@@ -122,6 +130,9 @@ const metadata = {
   }
   .origin .copy {
     margin-top: 1.5rem;
+  }
+  .team-title {
+    margin-bottom: clamp(2rem, 4vw, 3.5rem);
   }
   .origin img {
     width: 100%;

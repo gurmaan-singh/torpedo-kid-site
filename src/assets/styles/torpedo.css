@@ -5,12 +5,13 @@
   --burgundy: #8c3830;
   --stone: #e8e3d8;
   --warm-grey: #d9d5cc;
-  --graphite: #494a44;
+  --graphite: #3b3c37;
   --light-brass: #c5a979;
   --light-text: #d8d4c9;
   --white: #fff;
   --gutter: clamp(1.25rem, 4vw, 4rem);
   --section: clamp(4rem, 9vw, 8.5rem);
+  color-scheme: only light;
 }
 
 html {
@@ -63,6 +64,7 @@ html {
 .copy {
   color: var(--graphite);
   font-size: 1.125rem;
+  font-weight: 450;
   line-height: 1.6;
   max-width: 62ch;
   text-wrap: pretty;
@@ -143,11 +145,60 @@ html {
 }
 
 /* ---- Motion -------------------------------------------------------------
-   Scroll-linked and calm: transform, opacity and clip-path only. Everything
-   sits inside no-preference, so reduced motion gets the plain page. Elements
-   are only hidden once the `js` class is on <html> (Reveal.astro), so the page
-   reads fine without scripts. The selector lists below are mirrored in
-   Reveal.astro; change them together. */
+   Transform, opacity and clip-path only. Elements are only hidden once the `js` class is on <html>
+   (Reveal.astro), so the page reads fine without scripts. Reduced motion keeps a lighter version:
+   short opacity fades and nothing else. The selector lists are mirrored in motion.ts (REVEAL).
+   Pinned and scrubbed effects live in motion.ts. */
+
+/* Safety net used by the hero car and the heading masks: show things if the script never runs. */
+@keyframes tk-unhide {
+  to {
+    visibility: visible;
+  }
+}
+
+.band-dark {
+  background: var(--charcoal);
+  color: var(--cream);
+}
+
+/* Photos in a pinned or scrubbed row are driven by motion.ts. */
+[data-zoom] {
+  transform-origin: 50% 0;
+}
+
+/* The View circle replaces the pointer over photos (class set by motion.ts). */
+.has-cursor .ph:not(.slot-empty),
+.has-cursor [data-lightbox] {
+  cursor: none;
+}
+
+/* Cursor follower and other pointer extras only exist for fine pointers. */
+.cursor {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .cursor {
+    display: grid;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 70;
+    width: 5.5rem;
+    height: 5.5rem;
+    margin: -2.75rem 0 0 -2.75rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--burgundy);
+    color: var(--white);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   :root {
     --ease: cubic-bezier(0.22, 0.7, 0.2, 1);
@@ -175,15 +226,10 @@ html {
     }
   }
 
-  /* Headings: each line slides up from behind a mask. Reveal.astro builds the lines. */
-  .js :is(.band .title, .hero h1, .intro h1):not(.split-done) {
+  /* Headings: each line slides up from behind a mask. motion.ts builds the lines. */
+  .js :is(.band .title, .hero h1, .intro h1, .mission .statement):not(.split-done) {
     visibility: hidden;
-    animation: unhide 0s 1.5s forwards; /* safety net if the script never runs */
-  }
-  @keyframes unhide {
-    to {
-      visibility: visible;
-    }
+    animation: tk-unhide 0s 1.5s forwards; /* safety net if the script never runs */
   }
   .ln {
     display: block;
@@ -200,16 +246,20 @@ html {
     transform: translateY(110%);
   }
 
-  /* Copy, specs, rows and logos: a quiet fade with a short rise. */
+  /* Copy, cards and logos: a quiet fade with a short rise. */
   :is(
     .band .copy,
     .band .sub,
     .band .textlink,
     .band .photo-note,
-    .band .row > div:not(.ph),
+    .band .row > .txt,
     .band .partners > li,
-    .band dl > div,
-    .band ol
+    .band .specs > div,
+    .band ol:not(.stops),
+    .entry,
+    .gallery li,
+    .member,
+    .callouts:not(.is-pin) > .callout
   ) {
     transition:
       opacity 0.9s var(--ease) var(--d, 0s),
@@ -221,44 +271,95 @@ html {
       .band .sub,
       .band .textlink,
       .band .photo-note,
-      .band .row > div:not(.ph),
+      .band .row > .txt,
       .band .partners > li,
-      .band dl > div,
-      .band ol
+      .band .specs > div,
+      .band ol:not(.stops),
+      .entry,
+      .gallery li,
+      .member,
+      .callouts:not(.is-pin) > .callout
     ):not(.in) {
     opacity: 0;
     transform: translateY(0.75rem);
   }
 
-  /* Photos: wiped in from the bottom while the image settles from a slight zoom.
-     CAD renders are left still: any opacity or clip on them would stop their multiply blend. */
-  /* The clip is on the image, not the frame: a clipped target never reports as visible to the observer. */
+  /* Photos: wiped in from the bottom. The clip is on the image, not the frame: a clipped target
+     never reports as visible to the observer. CAD renders stay still so their multiply blend works.
+     The zoom and parallax inside the frame come from motion.ts. */
   .ph img:not(.cad) {
-    scale: 1.05;
     clip-path: inset(0);
-    will-change: translate;
-    transition:
-      scale 1.8s var(--ease),
-      clip-path 1.2s var(--ease);
+    transition: clip-path 1.2s var(--ease);
   }
   .js .ph:not(.in) img:not(.cad) {
-    scale: 1.14;
     clip-path: inset(100% 0 0 0);
   }
   @media (hover: hover) {
-    .ph:hover img:not(.cad) {
-      scale: 1.09;
-      transition: scale 0.9s var(--ease);
+    .ph img:not(.cad) {
+      scale: 1;
     }
-  }
-
-  /* Mission sentence: words ink in as it scrolls through (--p from Reveal.astro). */
-  .sw {
-    opacity: clamp(0.2, calc(0.2 + (var(--p, 1) * (var(--n) + 3) - var(--i)) * 0.4), 1);
+    .ph:hover img:not(.cad) {
+      scale: 1.04;
+      transition:
+        scale 0.9s var(--ease),
+        clip-path 1.2s var(--ease);
+    }
   }
 
   .num {
     display: inline-block;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Reduced motion: no movement, only quick fades on reveal. */
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .band .title,
+    .mission .statement,
+    .band .copy,
+    .band .sub,
+    .band .textlink,
+    .band .photo-note,
+    .band .row > .txt,
+    .band .partners > li,
+    .band .specs > div,
+    .band ol:not(.stops),
+    .entry,
+    .gallery li,
+    .member,
+    .callout,
+    .ph:not(.ph-cad)
+  ) {
+    transition: opacity 0.35s ease;
+  }
+  .js
+    :is(
+      .band .title,
+      .mission .statement,
+      .band .copy,
+      .band .sub,
+      .band .textlink,
+      .band .photo-note,
+      .band .row > .txt,
+      .band .partners > li,
+      .band .specs > div,
+      .band ol:not(.stops),
+      .entry,
+      .gallery li,
+      .member,
+      .callout,
+      .ph:not(.ph-cad)
+    ):not(.in) {
+    opacity: 0;
+  }
+  .hero-copy > :not(h1),
+  .intro .wrap > :not(h1) {
+    animation: fade-in 0.35s ease backwards;
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
   }
 }

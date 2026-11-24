@@ -1,26 +1,36 @@
 ---
+// The eight subsystem cards. Three layouts share this markup:
+//  - phones and tablets (under 64rem): a native swipe carousel with scroll-snap;
+//  - desktop with motion: motion.ts adds `is-hs`, pins the section and scrolls the track sideways;
+//  - desktop without motion or scripts: a two-column grid.
 import { Image } from 'astro:assets';
+import Slot from './Slot.astro';
 import { workNow } from '~/car';
 ---
 
-<div class="rows">
+<div class="rows" data-hs-track tabindex="0" role="group" aria-label="Subsystems, swipe or scroll sideways">
   {
-    workNow.map((w) => (
-      <article class:list={['row', { 'no-image': !w.image }]}>
-        <div>
+    workNow.map((w, i) => (
+      <article class:list={['row']}>
+        <div class="txt">
+          <span class="idx" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
           <h3>{w.name}</h3>
           <p>{w.text}</p>
         </div>
-        {w.image && (
+        {w.image ? (
           <div class:list={['ph', { 'ph-cad': w.cad }]}>
             <Image
               src={w.image}
               alt={w.alt ?? ''}
               widths={[360, 480, w.image.width].filter((x, i, a) => x <= w.image.width && a.indexOf(x) === i)}
-              sizes="(min-width: 56rem) 40vw, 92vw"
+              sizes="(min-width: 64rem) 40vw, 82vw"
               class:list={{ cad: w.cad }}
             />
           </div>
+        ) : (
+          <Slot ratio="4 / 3" file="car.ts" />
         )}
       </article>
     ))
@@ -31,6 +41,14 @@ import { workNow } from '~/car';
   .rows {
     display: grid;
     gap: clamp(3rem, 6vw, 5rem) clamp(2rem, 5vw, 5rem);
+  }
+  .idx {
+    display: block;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.875rem;
+    letter-spacing: 0.08em;
+    color: var(--graphite);
+    margin-bottom: 0.5rem;
   }
   h3 {
     font-family: var(--font-besley), serif;
@@ -52,11 +70,11 @@ import { workNow } from '~/car';
     gap: 1.5rem;
     align-content: start;
   }
-  .row img {
+  .row :global(img) {
     width: 100%;
     height: auto;
   }
-  .row img:not(.cad) {
+  .row :global(img:not(.cad)) {
     aspect-ratio: 4 / 3;
     object-fit: cover;
   }
@@ -66,13 +84,92 @@ import { workNow } from '~/car';
     max-height: 22rem;
     object-fit: contain;
   }
-  @media (min-width: 56rem) {
+  @media (min-width: 64rem) {
     .rows {
       grid-template-columns: 1fr 1fr;
     }
-    .row:not(.no-image) {
+    .row {
       grid-template-rows: subgrid;
       grid-row: span 2;
     }
+  }
+
+  /* Swipe carousel for phones and tablets. */
+  @media (max-width: 63.99rem) {
+    .rows {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      overscroll-behavior-x: contain;
+      margin-inline: calc(var(--gutter) * -1);
+      padding: 0.25rem var(--gutter) 1.25rem;
+      scroll-padding-inline: var(--gutter);
+      scrollbar-width: thin;
+      scrollbar-color: var(--burgundy) transparent;
+    }
+    .row {
+      flex: 0 0 min(84%, 26rem);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      scroll-snap-align: start;
+      background: var(--white);
+      border: 1px solid rgb(37 39 36 / 0.12);
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    .row :global(.ph) {
+      order: -1;
+    }
+    .txt {
+      padding: 1.25rem 1.25rem 1.5rem;
+    }
+    .row :global(.ph-cad) {
+      background: var(--white);
+      display: grid;
+      place-items: center;
+      aspect-ratio: 4 / 3;
+    }
+    .row :global(.ph-cad img) {
+      max-height: 100%;
+    }
+  }
+
+  /* Pinned sideways scroll: motion.ts adds .is-hs to the section on desktop with motion. */
+  :global(.is-hs) .rows {
+    display: flex;
+    gap: clamp(2rem, 3vw, 3rem);
+    width: max-content;
+    margin: 0;
+    padding: 0;
+  }
+  :global(.is-hs) .row {
+    flex: 0 0 clamp(24rem, 33vw, 34rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    grid-row: auto;
+  }
+  :global(.is-hs) .row :global(.ph) {
+    order: -1;
+    height: clamp(11rem, 36svh, 22rem);
+    aspect-ratio: auto;
+  }
+  :global(.is-hs) .row :global(.ph img:not(.cad)) {
+    height: 100%;
+    aspect-ratio: auto;
+    transition: none;
+  }
+  :global(.is-hs) .row :global(.ph-cad) {
+    background: var(--white);
+    display: grid;
+    place-items: center;
+  }
+  :global(.is-hs) .row :global(.cad) {
+    max-height: 100%;
+  }
+  :global(.is-hs) p {
+    font-size: 1.0625rem;
   }
 </style>

@@ -1,0 +1,53 @@
+---
+// Kinetic text band. motion.ts scrolls it and ties its speed and skew to scroll velocity.
+// Without motion the first copy stays as a centred, wrapping line.
+const text = 'TORPEDO KID · SINCE 1902 · REBUILT AT FONTYS · NEXT STOP SWEDEN ·';
+---
+
+<div class="marquee" data-marquee>
+  <div class="track">
+    <p class="copy-a">{text}&nbsp;</p>
+    <p class="copy-b" aria-hidden="true">{text}&nbsp;</p>
+  </div>
+</div>
+
+<style>
+  .marquee {
+    overflow: hidden;
+    background: var(--stone);
+    border-block: 1px solid rgb(37 39 36 / 0.14);
+    padding-block: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+  p {
+    flex: none;
+    margin: 0;
+    font-family: var(--font-besley), serif;
+    font-weight: 700;
+    font-size: clamp(3.5rem, 11vw, 9.5rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--charcoal);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .track {
+      width: auto;
+      justify-content: center;
+    }
+    p {
+      white-space: normal;
+      text-align: center;
+      font-size: clamp(2.25rem, 8vw, 5rem);
+      padding-inline: var(--gutter);
+    }
+    .copy-b {
+      display: none;
+    }
+  }
+</style>

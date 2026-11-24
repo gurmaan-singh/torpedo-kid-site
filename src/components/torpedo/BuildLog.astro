@@ -1,0 +1,69 @@
+---
+// Build log: three editorial cards. Content lives in data/content.ts.
+import Slot from './Slot.astro';
+import { buildLog } from '~/data/content';
+---
+
+<div class="log">
+  {
+    buildLog.map((e, i) => (
+      <article class="entry">
+        <Slot image={e.image} alt={e.alt} ratio="3 / 2" sizes="(min-width: 64rem) 28vw, 92vw" />
+        <p class="date">
+          <span>{String(i + 1).padStart(2, '0')}</span>
+          <time>{e.date}</time>
+        </p>
+        <h3>{e.title}</h3>
+        <p class="text">{e.text}</p>
+      </article>
+    ))
+  }
+</div>
+
+<style>
+  .log {
+    display: grid;
+    gap: clamp(2.5rem, 4vw, 3.5rem) clamp(1.5rem, 3vw, 3rem);
+  }
+  @media (min-width: 56rem) {
+    .log {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    /* Editorial stagger: the middle card sits lower. */
+    .entry:nth-child(2) {
+      margin-top: 3.5rem;
+    }
+  }
+  .entry {
+    display: block;
+    border-top: 2px solid var(--charcoal);
+    padding-top: 1.25rem;
+  }
+  .entry :global(.slot) {
+    margin-bottom: 1.25rem;
+  }
+  .date {
+    display: flex;
+    justify-content: space-between;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    color: var(--burgundy);
+  }
+  h3 {
+    margin-top: 0.75rem;
+    font-family: var(--font-besley), serif;
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    color: var(--charcoal);
+    text-wrap: balance;
+  }
+  .text {
+    margin-top: 0.75rem;
+    color: var(--graphite);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    text-wrap: pretty;
+  }
+</style>

@@ -1,0 +1,44 @@
+---
+// Team grid for /about. Content lives in data/content.ts. motion.ts adds a small hover tilt.
+import Slot from './Slot.astro';
+import { team } from '~/data/content';
+---
+
+<ul class="team">
+  {
+    team.map((m) => (
+      <li class="member" data-tilt>
+        <Slot image={m.image} alt={m.alt ?? m.name} ratio="4 / 5" sizes="(min-width: 64rem) 20vw, 46vw" />
+        <p class="name">{m.name}</p>
+        <p class="role">{m.role}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .team {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(1.5rem, 3vw, 2.5rem) clamp(0.75rem, 2vw, 1.5rem);
+  }
+  @media (min-width: 48rem) {
+    .team {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .member {
+    transform-style: preserve-3d;
+    will-change: auto;
+  }
+  .name {
+    margin-top: 0.9rem;
+    font-family: var(--font-besley), serif;
+    font-size: 1.25rem;
+    color: var(--charcoal);
+  }
+  .role {
+    font-size: 1rem;
+    color: var(--graphite);
+  }
+</style>

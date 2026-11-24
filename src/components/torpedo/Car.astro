@@ -9,7 +9,7 @@ const { class: className, label = 'Side view of the Torpedo Kid, the white elect
 ---
 
 <svg class:list={['car', className]} viewBox="0 0 1200 430" role="img" aria-label={label}>
-  <g>
+  <g class="car-body">
     <!-- Driver: bareheaded with a moustache, like Baker at Glenville -->
     <path d="M474 176 C474 138 490 124 522 124 C552 124 566 140 566 176 Z" fill="#8c3830"></path>
     <path
@@ -35,7 +35,7 @@ const { class: className, label = 'Side view of the Torpedo Kid, the white elect
     [REAR_X, FRONT_X].map((x) => (
       <g transform={`translate(${x} ${WHEEL_Y})`}>
         <g class="wheel-intro">
-          <g class="wheel-scroll" style="animation-timeline: scroll(root); animation-range: 0 90vh">
+          <g class="wheel-scroll">
             <circle r={WHEEL_R - 1} fill="#171816" stroke="#69665d" stroke-width="2" />
             <circle r="92" fill="#e8e3d8" />
             <path d="M0 0 L92 0 A92 92 0 0 1 46 79.7 Z" fill="#d9d5cc" />

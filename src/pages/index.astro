@@ -1,12 +1,15 @@
 ---
-import { Image } from 'astro:assets';
 import Layout from '~/layouts/PageLayout.astro';
 import StructuredData from '~/components/common/StructuredData.astro';
 import Car from '~/components/torpedo/Car.astro';
-import Specs from '~/components/torpedo/Specs.astro';
+import Marquee from '~/components/torpedo/Marquee.astro';
+import BuildSpecs from '~/components/torpedo/BuildSpecs.astro';
 import WorkNow from '~/components/torpedo/WorkNow.astro';
+import Road from '~/components/torpedo/Road.astro';
+import BuildLog from '~/components/torpedo/BuildLog.astro';
+import Gallery from '~/components/torpedo/Gallery.astro';
 import Partners from '~/components/torpedo/Partners.astro';
-import cad from '~/assets/images/torpedo/car/cad-assembly.jpg';
+import { workNow } from '~/car';
 import { SITE } from 'astrowind:config';
 import { contact } from '~/site';
 import { getPermalink } from '~/utils/permalinks';
@@ -32,20 +35,25 @@ const structuredData = [
 <Layout metadata={metadata}>
   <StructuredData slot="head" schema={structuredData} />
 
-  <section class="hero">
-    <div class="wrap hero-copy" style="animation-timeline: scroll(root); animation-range: 0 90vh">
+  <section class="hero" data-hero>
+    <div class="wrap hero-copy" data-hero-copy>
       <p class="kicker">History reimagined</p>
       <h1 class="display">Bringing an electric pioneer back to life.</h1>
       <a class="cta" href="#about">About the project</a>
     </div>
     <div class="road">
-      <div class="roll-in">
-        <div class="drive-off" style="animation-timeline: scroll(root); animation-range: 0 90vh"><Car /></div>
+      <div class="roll-in" data-car-in>
+        <div class="drive-off" data-car-out>
+          <div class="speed" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <Car />
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="band mission" id="mission">
+  <Marquee />
+
+  <section class="band mission" id="mission" data-zoom>
     <div class="wrap">
       <div class="split">
         <h2 class="title">Our mission</h2>
@@ -57,7 +65,7 @@ const structuredData = [
     </div>
   </section>
 
-  <section class="band band-stone" id="about">
+  <section class="band band-stone" id="about" data-zoom>
     <div class="wrap">
       <div class="split">
         <h2 class="title">About the project</h2>
@@ -70,31 +78,49 @@ const structuredData = [
           <p>This year we want to drive it for the first time, on a private road. After that comes Sweden.</p>
         </div>
       </div>
-      <div class="car-now">
-        <Image
-          src={cad}
-          alt="CAD model of our car without its body: a tube frame in three sections, four wheels and a seated driver."
-          widths={[480, 640, 810]}
-          sizes="(min-width: 64rem) 48vw, 92vw"
-        />
-        <div>
-          <h3 class="sub">What we are building</h3>
-          <Specs />
-          <p class="photo-note">Design targets and estimates. The body is not shown.</p>
-        </div>
-      </div>
     </div>
   </section>
 
-  <section class="band work" id="work">
+  <section class="band build" id="build" data-build-section>
     <div class="wrap">
-      <h2 class="title">What we are working on now</h2>
+      <h2 class="title">What we are building</h2>
+      <BuildSpecs />
+      <p class="photo-note">Design targets and estimates. The body is not shown.</p>
+    </div>
+  </section>
+
+  <section class="band band-stone work" id="work" data-work>
+    <div class="wrap">
+      <div class="work-head">
+        <h2 class="title">What we are working on now</h2>
+        <p class="count" data-count aria-hidden="true">01 / {String(workNow.length).padStart(2, '0')}</p>
+      </div>
       <WorkNow />
       <a class="textlink" href={getPermalink('/about')}>See how the project got here</a>
     </div>
   </section>
 
-  <section class="band band-stone partners-band" id="partners">
+  <section class="band band-dark road-band" id="road" data-road-section>
+    <div class="wrap">
+      <Road />
+    </div>
+  </section>
+
+  <section class="band" id="log" data-zoom>
+    <div class="wrap">
+      <h2 class="title">Build log</h2>
+      <BuildLog />
+    </div>
+  </section>
+
+  <section class="band band-stone" id="gallery" data-zoom>
+    <div class="wrap">
+      <h2 class="title">Gallery</h2>
+      <Gallery />
+    </div>
+  </section>
+
+  <section class="band partners-band" id="partners" data-zoom>
     <div class="wrap">
       <h2 class="title">Thank you to our partners, who made this project possible.</h2>
       <Partners />
@@ -105,20 +131,18 @@ const structuredData = [
 
 <style>
   .hero {
-    /* Scroll timelines are set inline: the CSS minifier folds animation-timeline
-       into the animation shorthand, which browsers reject.
-       Car width and travel are in vw so wheel rotation can be computed:
-       angle = distance / wheel radius, and the radius is 112/1200 of the car. */
+    /* Car width in vw, so the wheel travel in motion.ts can use the real wheel radius. */
     --car: 66;
-    --in: 100;
-    --out: 60;
-    --r: calc(var(--car) * 112 / 1200);
     background: var(--charcoal);
     color: var(--cream);
     overflow: hidden;
     min-height: calc(100svh - 4.5rem);
     display: grid;
     grid-template-rows: 1fr auto;
+  }
+  /* While pinned the hero fills the screen, so no blank strip shows under it. */
+  .hero.is-pin {
+    min-height: calc(100svh - 4.5rem);
   }
   .hero-copy {
     padding-block: clamp(2rem, 5vh, 4.5rem) 0;
@@ -143,10 +167,62 @@ const structuredData = [
     width: calc(var(--car) * 1vw);
     flex: none;
   }
-  .road :global(.wheel-intro),
-  .road :global(.wheel-scroll) {
-    transform-box: fill-box;
-    transform-origin: center;
+  .drive-off {
+    position: relative;
+    transform-origin: 50% 90%;
+  }
+  /* Speed lines trail behind the rear of the car. */
+  .speed {
+    position: absolute;
+    right: 94%;
+    bottom: 6%;
+    width: 30vw;
+    height: 62%;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .speed i {
+    position: absolute;
+    right: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(to left, rgb(243 240 232 / 0.55), transparent);
+    transform-origin: right center;
+    transform: scaleX(0);
+  }
+  .speed i:nth-child(1) {
+    top: 6%;
+    width: 62%;
+  }
+  .speed i:nth-child(2) {
+    top: 24%;
+    width: 100%;
+  }
+  .speed i:nth-child(3) {
+    top: 40%;
+    width: 74%;
+  }
+  .speed i:nth-child(4) {
+    top: 56%;
+    width: 92%;
+  }
+  .speed i:nth-child(5) {
+    top: 74%;
+    width: 56%;
+  }
+  .speed i:nth-child(6) {
+    top: 92%;
+    width: 84%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .speed {
+      display: none;
+    }
+  }
+  /* Until motion.ts has set up the intro the car stays hidden; it shows by itself if the script never runs. */
+  :global(.js:not(.mo)) .roll-in {
+    visibility: hidden;
+    animation: tk-unhide 0s 2.5s forwards;
   }
 
   /* Short screens: tuck the car up beside the headline so it stays in view. */
@@ -170,8 +246,10 @@ const structuredData = [
   @media (max-width: 47.99rem), (orientation: portrait) {
     .hero {
       --car: 94;
-      --out: 80;
       min-height: 0;
+    }
+    .hero.is-pin {
+      min-height: calc(100svh - 4.5rem);
     }
     .hero-copy {
       padding-bottom: 4rem;
@@ -180,108 +258,73 @@ const structuredData = [
       padding-right: 0;
       justify-content: center;
     }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    .roll-in {
-      animation: roll-in 1.9s cubic-bezier(0.16, 0.8, 0.3, 1) both;
-    }
-    .road :global(.wheel-intro) {
-      animation: wheel-in 1.9s cubic-bezier(0.16, 0.8, 0.3, 1) both;
-    }
-    @supports (animation-timeline: scroll()) {
-      .drive-off {
-        animation: drive-off linear both;
-      }
-      .road :global(.wheel-scroll) {
-        animation: wheel-off linear both;
-      }
-      /* The headline lags the page a little as you scroll. */
-      .hero-copy {
-        animation: lag linear both;
-      }
-    }
-    /* No scroll timelines (Firefox, older Safari): Reveal.astro sets --hp (0 to 1) on .hero instead. */
-    @supports not (animation-timeline: scroll()) {
-      .drive-off {
-        transform: translateX(calc(var(--hp, 0) * var(--out) * 1vw));
-      }
-      .road :global(.wheel-scroll) {
-        transform: rotate(calc(var(--hp, 0) * var(--out) / var(--r) * 1rad));
-      }
-      .hero-copy {
-        transform: translateY(calc(var(--hp, 0) * 14vh));
-      }
-    }
-  }
-  @keyframes lag {
-    to {
-      transform: translateY(14vh);
-    }
-  }
-  @keyframes roll-in {
-    from {
-      transform: translateX(calc(var(--in) * -1vw));
-    }
-  }
-  @keyframes wheel-in {
-    from {
-      transform: rotate(calc(var(--in) / var(--r) * -1rad));
-    }
-  }
-  @keyframes drive-off {
-    to {
-      transform: translateX(calc(var(--out) * 1vw));
-    }
-  }
-  @keyframes wheel-off {
-    to {
-      transform: rotate(calc(var(--out) / var(--r) * 1rad));
+    .speed {
+      width: 20vw;
     }
   }
 
+  /* The marquee slides up over the end of the pinned hero, so the empty stage never scrolls past on its own. */
+  :global(.pin-spacer:has(.hero) + .marquee) {
+    margin-top: -25svh;
+    position: relative;
+    z-index: 2;
+  }
   .mission {
     background: var(--cream);
   }
   .mission .statement {
     text-wrap: pretty;
   }
-  .car-now {
-    display: grid;
-    gap: 2.5rem clamp(2rem, 5vw, 5rem);
-    align-items: center;
-    margin-top: clamp(2.5rem, 5vw, 4.5rem);
-  }
-  .car-now img {
-    width: 100%;
-    height: auto;
-    mix-blend-mode: multiply;
-  }
-  @media (min-width: 64rem) {
-    .car-now {
-      grid-template-columns: 6fr 5fr;
-    }
-  }
-  .sub {
-    font-family: var(--font-besley), serif;
-    font-size: clamp(1.5rem, 2.2vw, 2rem);
-    letter-spacing: -0.015em;
-    color: var(--charcoal);
-    margin-bottom: 1.5rem;
-  }
-  .car-now .photo-note {
-    margin-top: 1.75rem;
-  }
-  .work {
+  .build {
     background: var(--cream);
   }
-  .work .title {
-    margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+  .build .title {
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+  }
+  /* A pinned wrap is its own stacking context, so it needs a ground for the render's multiply blend. */
+  .build.is-pin .wrap {
+    padding-top: 1.25rem;
+    background: var(--cream);
+  }
+  .build .photo-note {
+    margin-top: 1.75rem;
+  }
+  .work-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  }
+  /* The counter only means something for the carousel and the pinned track. */
+  .count {
+    display: none;
+    flex: none;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: clamp(1rem, 1.6vw, 1.375rem);
+    letter-spacing: 0.08em;
+    color: var(--burgundy);
+    font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 63.99rem) {
+    .count {
+      display: block;
+    }
+  }
+  :global(.is-hs) .count {
+    display: block;
   }
   .work .textlink {
-    display: inline-block;
-    margin-top: clamp(2.5rem, 5vw, 4rem);
+    display: inline-flex;
+    margin-top: clamp(1.5rem, 4vw, 4rem);
     font-size: 1.125rem;
+  }
+  .road-band .title {
+    color: var(--cream);
+  }
+  #log .title,
+  #gallery .title {
+    margin-bottom: clamp(2rem, 4vw, 3.5rem);
   }
   .partners-band .title {
     max-width: 22ch;
@@ -291,5 +334,32 @@ const structuredData = [
     display: inline-block;
     margin-top: clamp(2.5rem, 5vw, 4rem);
     font-size: 1.125rem;
+  }
+
+  /* Desktop with motion: the work section is pinned, so it fills the screen. */
+  :global(.is-hs).work {
+    min-height: calc(100svh - 4.5rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    padding-block: 1.5rem;
+  }
+  :global(.is-hs).work > .wrap {
+    max-width: none;
+    padding-inline: 0;
+  }
+  :global(.is-hs).work .work-head,
+  :global(.is-hs).work .textlink {
+    margin-inline: max(var(--gutter), calc((100vw - 84rem) / 2 + var(--gutter)));
+  }
+  :global(.is-hs).work .work-head {
+    margin-bottom: 1.5rem;
+  }
+  :global(.is-hs).work :global(.rows[data-hs-track]) {
+    padding-left: max(var(--gutter), calc((100vw - 84rem) / 2 + var(--gutter)));
+  }
+  :global(.is-hs).work .textlink {
+    margin-top: 1rem;
   }
 </style>

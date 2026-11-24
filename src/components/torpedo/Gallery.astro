@@ -1,0 +1,102 @@
+---
+// Offset photo grid with a simple lightbox (a native <dialog>, wired up in motion.ts).
+// Empty slots are not clickable. Content lives in data/content.ts.
+import { getImage } from 'astro:assets';
+import Slot from './Slot.astro';
+import { gallery } from '~/data/content';
+
+const items = await Promise.all(
+  gallery.map(async (g) => ({
+    ...g,
+    big: g.image ? (await getImage({ src: g.image, width: Math.min(1600, g.image.width) })).src : undefined,
+  }))
+);
+---
+
+<ul class="gallery">
+  {
+    items.map((g) => (
+      <li>
+        {g.image ? (
+          <button type="button" data-lightbox={g.big} data-alt={g.alt} aria-label={`Open photo: ${g.alt}`}>
+            <Slot image={g.image} alt="" ratio={g.ratio} sizes="(min-width: 64rem) 30vw, 46vw" />
+          </button>
+        ) : (
+          <Slot ratio={g.ratio} />
+        )}
+      </li>
+    ))
+  }
+</ul>
+
+<dialog class="lightbox" aria-label="Photo viewer">
+  <button type="button" class="close" aria-label="Close photo">Close</button>
+  <img alt="" />
+  <p class="cap"></p>
+</dialog>
+
+<style>
+  .gallery {
+    columns: 2;
+    column-gap: clamp(0.75rem, 2vw, 1.5rem);
+  }
+  @media (min-width: 56rem) {
+    .gallery {
+      columns: 3;
+    }
+    .gallery li:nth-child(3) {
+      margin-top: 3rem;
+    }
+  }
+  li {
+    break-inside: avoid;
+    margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
+  }
+  li button {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .lightbox {
+    padding: 0;
+    border: 0;
+    background: var(--charcoal);
+    color: var(--cream);
+    max-width: min(92vw, 1100px);
+    max-height: 92svh;
+    margin: auto;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .lightbox::backdrop {
+    background: rgb(20 21 19 / 0.88);
+  }
+  .lightbox img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(92svh - 5rem);
+    margin: 0 auto;
+    object-fit: contain;
+  }
+  .cap {
+    padding: 0.75rem 1.25rem 1rem;
+    font-size: 0.9375rem;
+    color: var(--light-text);
+  }
+  .close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--cream);
+    color: var(--charcoal);
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>

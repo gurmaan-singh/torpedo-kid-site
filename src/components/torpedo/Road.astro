@@ -1,0 +1,249 @@
+---
+// "The road to Sweden": a stylised route from Eindhoven through Germany and Denmark. Coastlines are
+// a handful of lon/lat points, smoothed, nothing more. motion.ts draws the route and drives the
+// car icon along it as you scroll. Milestones come from data/content.ts.
+import { milestones } from '~/data/content';
+
+type P = [number, number];
+const LAT0 = 58.3;
+const LON0 = 3.5;
+const S = 105;
+const KX = Math.cos((55 * Math.PI) / 180);
+const proj = ([lon, lat]: P): P => [Math.round((lon - LON0) * KX * S * 10) / 10, Math.round((LAT0 - lat) * S * 10) / 10];
+
+// Catmull-Rom through the points, written as cubic beziers.
+const segs = (pts: P[], closed: boolean) => {
+  const n = pts.length;
+  const get = (i: number) => (closed ? pts[(i + n) % n] : pts[Math.max(0, Math.min(n - 1, i))]);
+  const out: [P, P, P, P][] = [];
+  for (let i = 0; i < (closed ? n : n - 1); i++) {
+    const [p0, p1, p2, p3] = [get(i - 1), get(i), get(i + 1), get(i + 2)];
+    out.push([
+      p1,
+      [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6],
+      [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6],
+      p2,
+    ]);
+  }
+  return out;
+};
+// `via` closes an open coast with straight lines out past the edge of the map, so the land can be filled.
+const toD = (pts: P[], closed = false, via: P[] = []) => {
+  const s = segs(pts.map(proj), closed);
+  const f = (p: P) => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`;
+  return (
+    `M${f(s[0][0])}` +
+    s.map(([, a, b, c]) => ` C${f(a)} ${f(b)} ${f(c)}`).join('') +
+    via.map((v) => ` L${f(proj(v))}`).join('') +
+    (closed || via.length ? 'Z' : '')
+  );
+};
+
+const coasts: { pts: P[]; closed?: boolean; via?: P[] }[] = [
+  {
+    // Belgium to Poland, round Jutland
+    pts: [[3.4,51.35],[3.9,51.7],[4.15,52.05],[4.55,52.45],[4.75,52.95],[5.4,53.2],[6.2,53.45],[7.0,53.4],[7.9,53.7],[8.5,53.55],[8.7,53.9],[8.85,54.1],[8.6,54.4],[8.65,54.9],[8.4,55.3],[8.1,55.55],[8.2,56.0],[8.15,56.5],[8.6,57.1],[9.4,57.2],[10.0,57.6],[10.6,57.74],[10.5,57.3],[10.3,56.99],[10.9,56.45],[10.2,56.15],[9.85,55.87],[9.75,55.56],[9.5,55.4],[9.4,55.04],[9.45,54.8],[10.0,54.5],[10.15,54.35],[11.0,54.45],[10.9,53.95],[11.45,53.9],[12.1,54.15],[13.4,54.3]],
+    via: [[16,54.3],[16,49.5],[2.5,49.5],[2.5,51.3]],
+  },
+  { pts: [[9.8,55.45],[10.1,55.65],[10.6,55.7],[10.8,55.45],[10.5,55.1],[10.0,55.15],[9.75,55.3]], closed: true },
+  { pts: [[11.1,55.75],[11.4,56.0],[12.1,56.1],[12.6,56.05],[12.6,55.65],[12.3,55.35],[12.2,55.0],[11.8,54.95],[11.3,55.2],[11.15,55.45]], closed: true },
+  { pts: [[10.9,54.75],[11.9,54.8],[12.15,54.65],[11.2,54.58]], closed: true },
+  { pts: [[11.5,58.3],[11.97,57.7],[12.2,57.3],[12.4,56.9],[12.65,56.45],[12.75,56.05],[12.95,55.55],[13.2,55.35],[14.0,55.4],[14.3,55.6],[14.35,56.0],[14.6,56.25]], via: [[16,56.25],[16,59],[11.5,59]] },
+];
+
+const route: P[] = [[5.48,51.44],[6.1,51.9],[7.0,52.2],[8.05,52.28],[8.8,53.08],[9.99,53.55],[9.75,54.2],[9.43,54.78],[9.5,55.45],[10.4,55.4],[11.15,55.33],[12.0,55.55],[12.57,55.68],[13.0,55.6]];
+const routeD = toD(route);
+
+// Sample the route to find where each milestone sits along it.
+const samples: P[] = [];
+for (const [a, b, c, d] of segs(route.map(proj), false))
+  for (let t = 0; t < 1; t += 0.05) {
+    const u = 1 - t;
+    samples.push([
+      u ** 3 * a[0] + 3 * u * u * t * b[0] + 3 * u * t * t * c[0] + t ** 3 * d[0],
+      u ** 3 * a[1] + 3 * u * u * t * b[1] + 3 * u * t * t * c[1] + t ** 3 * d[1],
+    ]);
+  }
+samples.push(proj(route[route.length - 1]));
+const cum = [0];
+for (let i = 1; i < samples.length; i++)
+  cum.push(cum[i - 1] + Math.hypot(samples[i][0] - samples[i - 1][0], samples[i][1] - samples[i - 1][1]));
+const at = (f: number): P => {
+  const L = f * cum[cum.length - 1];
+  let i = cum.findIndex((c) => c >= L);
+  if (i <= 0) return samples[0];
+  const k = (L - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
+  return [samples[i - 1][0] + k * (samples[i][0] - samples[i - 1][0]), samples[i - 1][1] + k * (samples[i][1] - samples[i - 1][1])];
+};
+const stops = milestones.map((m, i) => ({ ...m, n: String(i + 1).padStart(2, '0'), xy: at(m.at) }));
+const names: { t: string; lon: number; lat: number }[] = [
+  { t: 'EINDHOVEN', lon: 5.75, lat: 51.2 },
+  { t: 'GERMANY', lon: 9.6, lat: 52.2 },
+  { t: 'DENMARK', lon: 9.0, lat: 56.35 },
+  { t: 'SWEDEN', lon: 13.4, lat: 57.4 },
+];
+---
+
+<div class="road-pin" data-road>
+  <div class="road-copy">
+    <h2 class="title">The road to Sweden</h2>
+    <ol class="stops">
+      {
+        stops.map((s) => (
+          <li class:list={['stop', { ph: s.placeholder }]} data-at={s.at}>
+            <span class="n" aria-hidden="true">{s.n}</span>
+            <span class="lab">{s.label}</span>
+            <span class="txt">{s.text}</span>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="note">Stylised route, not to scale.</p>
+  </div>
+  <div class="map">
+    <svg viewBox="0 0 700 780" overflow="hidden" role="img" aria-label="A stylised map: a route from Eindhoven through Germany and Denmark to Sweden.">
+      <g class="coast">
+        {coasts.map((c) => <path d={toD(c.pts, c.closed, c.via)} />)}
+      </g>
+      <g class="names">
+        {
+          names.map((n) => {
+            const [x, y] = proj([n.lon, n.lat]);
+            return (
+              <text x={x} y={y}>
+                {n.t}
+              </text>
+            );
+          })
+        }
+      </g>
+      <path class="ghost" d={routeD} fill="none"></path>
+      <path id="route" class="draw" d={routeD} fill="none" pathLength="100"></path>
+      {
+        stops.map((s) => (
+          <g class:list={['dot', { ph: s.placeholder }]} transform={`translate(${s.xy[0].toFixed(1)} ${s.xy[1].toFixed(1)})`}>
+            <circle r="11"></circle>
+            <text y="4.5" text-anchor="middle">{s.n.replace(/^0/, '')}</text>
+          </g>
+        ))
+      }
+      <g class="rcar">
+        <rect x="-19" y="-8" width="38" height="16" rx="7" fill="#f3f0e8"></rect>
+        <rect x="-4" y="-8" width="14" height="16" fill="#8c3830"></rect>
+        <rect x="-15" y="-10.5" width="8" height="3" rx="1.5" fill="#d8d4c9"></rect>
+        <rect x="-15" y="7.5" width="8" height="3" rx="1.5" fill="#d8d4c9"></rect>
+        <rect x="8" y="-10.5" width="8" height="3" rx="1.5" fill="#d8d4c9"></rect>
+        <rect x="8" y="7.5" width="8" height="3" rx="1.5" fill="#d8d4c9"></rect>
+      </g>
+    </svg>
+  </div>
+</div>
+
+<style>
+  .road-pin {
+    display: grid;
+    gap: 2.5rem clamp(2rem, 6vw, 6rem);
+    align-items: center;
+  }
+  .title {
+    color: var(--cream);
+  }
+  .stops {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+  .stop {
+    display: grid;
+    grid-template-columns: 2.25rem 6.5rem 1fr;
+    gap: 0 0.75rem;
+    align-items: baseline;
+    font-size: 1.125rem;
+    line-height: 1.45;
+    color: var(--cream);
+  }
+  .n {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.875rem;
+    color: var(--light-brass);
+  }
+  .lab {
+    color: var(--light-brass);
+  }
+  .stop.ph .lab {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.8125rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .stop.ph .txt {
+    color: var(--light-text);
+  }
+  .note {
+    margin-top: 2rem;
+    font-size: 0.9375rem;
+    color: var(--light-text);
+  }
+  .map {
+    width: min(100%, 36rem);
+    justify-self: center;
+  }
+  svg {
+    /* The map fades out at its edges, so the land fill has no hard border. */
+    mask-image: radial-gradient(ellipse at 50% 50%, #000 74%, transparent 99%);
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: calc(100svh - 8rem);
+    overflow: hidden;
+  }
+  .coast path {
+    fill: rgb(216 212 201 / 0.07);
+    stroke: rgb(216 212 201 / 0.5);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+  }
+  .names text {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    fill: var(--light-text);
+  }
+  .ghost {
+    stroke: rgb(216 212 201 / 0.5);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 7;
+    stroke-linecap: round;
+  }
+  .draw {
+    stroke: #d8574a;
+    stroke-width: 3;
+    stroke-dasharray: 100 100;
+    stroke-dashoffset: 0;
+    stroke-linecap: butt;
+    stroke-linejoin: round;
+  }
+  /* The car is placed by motion.ts; until then it stays hidden. */
+  :global(.js) .rcar {
+    opacity: 0;
+  }
+  .dot circle {
+    fill: var(--charcoal);
+    stroke: var(--light-brass);
+    stroke-width: 2;
+  }
+  .dot text {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    fill: var(--cream);
+  }
+  .dot.ph circle {
+    stroke-dasharray: 3 2;
+  }
+  @media (min-width: 64rem) {
+    .road-pin {
+      grid-template-columns: 5fr 6fr;
+      min-height: calc(100svh - 4.5rem);
+    }
+  }
+</style>
