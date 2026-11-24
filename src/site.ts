@@ -10,7 +10,7 @@ import { getPermalink } from './utils/permalinks';
 
 export const contact = {
   email: 'torpedokid2021@gmail.com',
-  instagram: 'https://www.instagram.com/torpedokid/',
+  instagram: 'https://www.instagram.com/torpedokid_fontys/',
   linkedin: 'https://www.linkedin.com/company/fontys-engineering-torpedokid/',
 };
 
