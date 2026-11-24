@@ -2,28 +2,27 @@ import { getPermalink, getBlogPermalink, getAsset } from './utils/permalinks';
 
 export const headerData = {
   links: [
-        {
-          text: 'Features (Anchor Link)',
-          href: getPermalink('/#features'),
-        },
-        {
-          text: 'Join Us',
-          href: getPermalink('/join-us'),
-        },
-        {
-          text: 'Partner With Us',
-          href: getPermalink('/partner-with-us'),
-        },
-        {
-          text: 'About us',
-          href: getPermalink('/about'),
-        },
-        {
-          text: 'Contact',
-          href: getPermalink('/contact'),
-        },
+    {
+      text: 'Features (Anchor Link)',
+      href: getPermalink('/#features'),
+    },
+    {
+      text: 'Join Us',
+      href: getPermalink('/join-us'),
+    },
+    {
+      text: 'Partner With Us',
+      href: getPermalink('/partner-with-us'),
+    },
+    {
+      text: 'About us',
+      href: getPermalink('/about'),
+    },
+    {
+      text: 'Contact',
+      href: getPermalink('/contact'),
+    },
   ],
-
 };
 
 export const footerData = {
@@ -57,10 +56,7 @@ export const footerData = {
       ],
     },
   ],
-  secondaryLinks: [
-    { text: 'Terms', href: getPermalink('/terms') },
-    { text: 'Privacy Policy', href: getPermalink('/privacy') },
-  ],
+  secondaryLinks: [],
   socialLinks: [
     { ariaLabel: 'RSS', icon: 'tabler:rss', href: getAsset('/rss.xml') },
     { ariaLabel: 'Github', icon: 'tabler:brand-github', href: 'https://github.com/arthelokyo/astrowind' },

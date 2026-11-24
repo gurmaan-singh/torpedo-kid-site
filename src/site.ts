@@ -5,6 +5,7 @@ import knightec from './assets/images/torpedo/partners/knightec.svg';
 import qtronic from './assets/images/torpedo/partners/q-tronic.svg';
 import evEurope from './assets/images/torpedo/partners/ev-europe.svg';
 import summa from './assets/images/torpedo/partners/summa.svg';
+import tailorSteel from './assets/images/torpedo/partners/247tailorsteel.svg';
 import { getPermalink } from './utils/permalinks';
 
 export const contact = {
@@ -41,6 +42,7 @@ export const partners: Partner[] = [
     logo: summa,
     height: 3,
   },
+  { name: '247TailorSteel', href: 'https://247tailorsteel.com/', logo: tailorSteel, height: 3.75 },
   { name: 'BatteryCenter' },
 ];
 
