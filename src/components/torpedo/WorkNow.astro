@@ -12,13 +12,15 @@ import { workNow } from '~/car';
           <p>{w.text}</p>
         </div>
         {w.image && (
-          <Image
-            src={w.image}
-            alt={w.alt ?? ''}
-            widths={[360, 480, w.image.width].filter((x, i, a) => x <= w.image.width && a.indexOf(x) === i)}
-            sizes="(min-width: 56rem) 40vw, 92vw"
-            class:list={{ cad: w.cad }}
-          />
+          <div class:list={['ph', { 'ph-cad': w.cad }]}>
+            <Image
+              src={w.image}
+              alt={w.alt ?? ''}
+              widths={[360, 480, w.image.width].filter((x, i, a) => x <= w.image.width && a.indexOf(x) === i)}
+              sizes="(min-width: 56rem) 40vw, 92vw"
+              class:list={{ cad: w.cad }}
+            />
+          </div>
         )}
       </article>
     ))

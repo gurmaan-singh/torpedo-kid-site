@@ -123,3 +123,142 @@ html {
   outline: 3px solid var(--brass);
   outline-offset: 4px;
 }
+
+/* Standalone links get a 44px touch target; links inside a paragraph keep their line. */
+.textlink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+.cta {
+  transition: background-color 0.2s;
+}
+
+/* Photos sit in a clipped frame (see WorkNow and about). */
+.ph {
+  overflow: hidden;
+}
+.ph img {
+  display: block;
+}
+
+/* ---- Motion -------------------------------------------------------------
+   Scroll-linked and calm: transform, opacity and clip-path only. Everything
+   sits inside no-preference, so reduced motion gets the plain page. Elements
+   are only hidden once the `js` class is on <html> (Reveal.astro), so the page
+   reads fine without scripts. The selector lists below are mirrored in
+   Reveal.astro; change them together. */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --ease: cubic-bezier(0.22, 0.7, 0.2, 1);
+  }
+
+  /* On load: kicker, lead and button rise in; headlines use the line mask below. */
+  .hero-copy > :not(h1),
+  .intro .wrap > :not(h1) {
+    animation: rise 0.9s var(--ease) backwards;
+  }
+  .hero-copy > :nth-child(1) {
+    animation-delay: 0.05s;
+  }
+  .intro .wrap > :nth-child(2) {
+    animation-delay: 0.35s;
+  }
+  .hero-copy > :nth-child(3),
+  .intro .wrap > :nth-child(3) {
+    animation-delay: 0.55s;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+  }
+
+  /* Headings: each line slides up from behind a mask. Reveal.astro builds the lines. */
+  .js :is(.band .title, .hero h1, .intro h1):not(.split-done) {
+    visibility: hidden;
+    animation: unhide 0s 1.5s forwards; /* safety net if the script never runs */
+  }
+  @keyframes unhide {
+    to {
+      visibility: visible;
+    }
+  }
+  .ln {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    padding-block: 0.14em;
+    margin-block: -0.14em;
+  }
+  .li {
+    display: block;
+    transition: transform 1s var(--ease) calc(var(--l, 0) * 0.09s);
+  }
+  .js .split-done:not(.in) .li {
+    transform: translateY(110%);
+  }
+
+  /* Copy, specs, rows and logos: a quiet fade with a short rise. */
+  :is(
+    .band .copy,
+    .band .sub,
+    .band .textlink,
+    .band .photo-note,
+    .band .row > div:not(.ph),
+    .band .partners > li,
+    .band dl > div,
+    .band ol
+  ) {
+    transition:
+      opacity 0.9s var(--ease) var(--d, 0s),
+      transform 0.9s var(--ease) var(--d, 0s);
+  }
+  .js
+    :is(
+      .band .copy,
+      .band .sub,
+      .band .textlink,
+      .band .photo-note,
+      .band .row > div:not(.ph),
+      .band .partners > li,
+      .band dl > div,
+      .band ol
+    ):not(.in) {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+
+  /* Photos: wiped in from the bottom while the image settles from a slight zoom.
+     CAD renders are left still: any opacity or clip on them would stop their multiply blend. */
+  /* The clip is on the image, not the frame: a clipped target never reports as visible to the observer. */
+  .ph img:not(.cad) {
+    scale: 1.05;
+    clip-path: inset(0);
+    will-change: translate;
+    transition:
+      scale 1.8s var(--ease),
+      clip-path 1.2s var(--ease);
+  }
+  .js .ph:not(.in) img:not(.cad) {
+    scale: 1.14;
+    clip-path: inset(100% 0 0 0);
+  }
+  @media (hover: hover) {
+    .ph:hover img:not(.cad) {
+      scale: 1.09;
+      transition: scale 0.9s var(--ease);
+    }
+  }
+
+  /* Mission sentence: words ink in as it scrolls through (--p from Reveal.astro). */
+  .sw {
+    opacity: clamp(0.2, calc(0.2 + (var(--p, 1) * (var(--n) + 3) - var(--i)) * 0.4), 1);
+  }
+
+  .num {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+  }
+}

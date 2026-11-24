@@ -9,6 +9,7 @@ const current = (href: string) => ((href.replace(/\/$/, '') || '/') === here ? '
 
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">
+  <div class="progress" aria-hidden="true" style="animation-timeline: scroll(root)"></div>
   <div class="wrap bar">
     <a class="brand" href={nav[0].href}><Mark /><span>TorpedoKid</span></a>
     <nav class="desktop" aria-label="Main">
@@ -59,6 +60,35 @@ const current = (href: string) => ((href.replace(/\/$/, '') || '/') === here ? '
     background: var(--charcoal);
     color: var(--cream);
   }
+  /* Reading progress. Inline style carries the timeline: the CSS minifier folds animation-timeline into
+     the shorthand, which browsers reject. Without scroll timelines Reveal.astro sets --read instead. */
+  .progress {
+    position: absolute;
+    inset: 100% 0 auto;
+    height: 3px;
+    background: var(--burgundy);
+    transform: scaleX(var(--read, 0));
+    transform-origin: left;
+    pointer-events: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    .progress {
+      animation: read linear both;
+    }
+  }
+  @keyframes read {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .progress {
+      display: none;
+    }
+  }
   .bar {
     display: flex;
     align-items: center;
@@ -71,7 +101,7 @@ const current = (href: string) => ((href.replace(/\/$/, '') || '/') === here ? '
     gap: 0.75rem;
     font-size: 1.25rem;
     font-weight: 600;
-    padding-block: 0.5rem;
+    min-height: 2.75rem;
   }
   nav a {
     color: var(--light-text);
@@ -82,10 +112,30 @@ const current = (href: string) => ((href.replace(/\/$/, '') || '/') === here ? '
   }
   .desktop {
     display: flex;
-    gap: 2.25rem;
+    gap: 1.25rem;
   }
   .desktop a {
-    padding-block: 0.75rem;
+    position: relative;
+    padding: 0.75rem 0.5rem;
+  }
+  /* Underline sweeps in from the left on hover and keyboard focus. */
+  .desktop a::after {
+    content: '';
+    position: absolute;
+    inset: auto 0.5rem 0.5rem;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .desktop a::after {
+      transition: transform 0.35s var(--ease);
+    }
+  }
+  .desktop a:hover::after,
+  .desktop a:focus-visible::after {
+    transform: scaleX(1);
   }
   .mobile {
     display: none;
@@ -130,3 +180,13 @@ const current = (href: string) => ((href.replace(/\/$/, '') || '/') === here ? '
     }
   }
 </style>
+
+<script>
+  // The menu is a <details>: close it on a link tap (same-page links do not reload), on Escape and on an outside tap.
+  const closeMenu = () => document.querySelectorAll('details.mobile[open]').forEach((d) => d.removeAttribute('open'));
+  document.addEventListener('click', (e) => {
+    const t = e.target as Element;
+    if (t.closest('details.mobile nav a') || !t.closest('details.mobile')) closeMenu();
+  });
+  document.addEventListener('keydown', (e) => e.key === 'Escape' && closeMenu());
+</script>

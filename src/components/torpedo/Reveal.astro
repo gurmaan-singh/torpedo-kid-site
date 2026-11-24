@@ -1,0 +1,220 @@
+---
+// Scroll motion for the whole site. Adds the `js` class that lets torpedo.css hide
+// things before they are revealed, then drives: one-shot reveals (IntersectionObserver),
+// heading line masks, number count-ups, and two scroll-scrubbed effects (the mission
+// sentence and the parallax inside photos). Reduced motion or no script: nothing is hidden.
+---
+
+<script is:inline data-astro-rerun>
+  // Runs in <head>, before first paint. ClientRouter swaps <html> attributes, so re-add after a swap.
+  document.documentElement.classList.add('js');
+  document.addEventListener('astro:after-swap', () => document.documentElement.classList.add('js'));
+</script>
+
+<script>
+  // Keep these lists in step with the Motion block in torpedo.css.
+  const FADE =
+    '.band .copy, .band .sub, .band .textlink, .band .photo-note, .band .row > div:not(.ph), .band .partners > li, .band dl > div, .band ol';
+  const HEADINGS = '.band .title, .hero h1, .intro h1';
+  const WIPE = '.ph:not(.ph-cad)';
+
+  const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+  // Where CSS scroll timelines work, the header bar and hero are driven by CSS; elsewhere by --read / --hp below.
+  const cssTimelines = CSS.supports('animation-timeline: scroll()');
+
+  let io: IntersectionObserver | undefined;
+  let countIo: IntersectionObserver | undefined;
+  let scrubs: HTMLElement[] = [];
+  let photos: HTMLImageElement[] = [];
+  let headings: HTMLElement[] = [];
+  let queued = false;
+
+  function tick() {
+    queued = false;
+    const vh = innerHeight;
+    const y = scrollY;
+    // Reads first, writes after, so a frame never forces layout twice.
+    const scrubRects = scrubs.map((el) => el.getBoundingClientRect());
+    const photoRects = photos.map((img) => (img.parentElement as HTMLElement).getBoundingClientRect());
+    if (!cssTimelines) {
+      const max = document.documentElement.scrollHeight - vh;
+      (document.querySelector('.progress') as HTMLElement | null)?.style.setProperty(
+        '--read',
+        String(max > 0 ? clamp(y / max) : 0)
+      );
+      (document.querySelector('.hero') as HTMLElement | null)?.style.setProperty('--hp', String(clamp(y / (0.9 * vh))));
+    }
+    scrubs.forEach((el, i) => {
+      const r = scrubRects[i];
+      el.style.setProperty('--p', clamp((0.85 * vh - r.top) / (0.35 * vh + r.height)).toFixed(3));
+    });
+    photos.forEach((img, i) => {
+      const r = photoRects[i];
+      if (r.bottom < -80 || r.top > vh + 80) return;
+      const t = clamp((r.top + r.height / 2 - vh / 2) / (vh / 2 + r.height / 2), -1, 1);
+      img.style.translate = `0 ${(-t * 1.8).toFixed(2)}%`;
+    });
+  }
+  const queue = () => {
+    if (!queued) {
+      queued = true;
+      requestAnimationFrame(tick);
+    }
+  };
+
+  // Rebuilds a heading as one masked block per rendered line.
+  function splitLines(el: HTMLElement) {
+    const text = (el.dataset.text ??= (el.textContent ?? '').replace(/\s+/g, ' ').trim());
+    el.textContent = '';
+    text.split(' ').forEach((w, i, all) => {
+      const s = document.createElement('span');
+      s.textContent = w;
+      el.append(s, i < all.length - 1 ? ' ' : '');
+    });
+    const words = [...el.children] as HTMLElement[];
+    const lines: string[][] = [];
+    let top = -1;
+    words.forEach((w) => {
+      if (Math.abs(w.offsetTop - top) > 2) {
+        lines.push([]);
+        top = w.offsetTop;
+      }
+      lines[lines.length - 1].push(w.textContent as string);
+    });
+    el.textContent = '';
+    lines.forEach((l, i) => {
+      const ln = document.createElement('span');
+      ln.className = 'ln';
+      const li = document.createElement('span');
+      li.className = 'li';
+      li.style.setProperty('--l', String(i));
+      li.textContent = l.join(' ');
+      ln.append(li);
+      el.append(ln, i < lines.length - 1 ? ' ' : '');
+    });
+    el.dataset.w = String(Math.round(el.getBoundingClientRect().width));
+    el.classList.add('split-done');
+  }
+
+  // Words get an index so CSS can ink them in one after another as --p grows.
+  function splitWords(el: HTMLElement) {
+    const words = (el.textContent ?? '').trim().split(/\s+/);
+    el.textContent = '';
+    words.forEach((w, i) => {
+      const s = document.createElement('span');
+      s.className = 'sw';
+      s.style.setProperty('--i', String(i));
+      s.textContent = w;
+      el.append(s, i < words.length - 1 ? ' ' : '');
+    });
+    el.style.setProperty('--n', String(words.length));
+  }
+
+  // Wraps each plain number in a spec value so it can tick up. Text is unchanged once it lands.
+  function prepCounters(root: Document) {
+    const spans: HTMLElement[] = [];
+    root.querySelectorAll<HTMLElement>('.specs dd').forEach((dd) => {
+      const walker = document.createTreeWalker(dd, NodeFilter.SHOW_TEXT);
+      const nodes: Text[] = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+      nodes.forEach((node) => {
+        const parts = (node.textContent ?? '').split(/((?<![\w.])\d+(?:\.\d+)?(?![\w]))/);
+        if (parts.length < 2) return;
+        const frag = document.createDocumentFragment();
+        parts.forEach((part, i) => {
+          if (i % 2 === 0) return part && frag.append(part);
+          const s = document.createElement('span');
+          s.className = 'num';
+          s.dataset.to = part;
+          s.style.minWidth = `${part.length}ch`;
+          s.textContent = '0';
+          spans.push(s);
+          frag.append(s);
+        });
+        node.replaceWith(frag);
+      });
+    });
+    return spans;
+  }
+
+  function countUp(el: HTMLElement) {
+    const to = parseFloat(el.dataset.to as string);
+    const decimals = (el.dataset.to as string).split('.')[1]?.length ?? 0;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = clamp((now - start) / 1300);
+      el.textContent = (to * (1 - Math.pow(1 - t, 3))).toFixed(decimals);
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  async function init() {
+    io?.disconnect();
+    countIo?.disconnect();
+    const targets = [...document.querySelectorAll<HTMLElement>([FADE, HEADINGS, WIPE].join(', '))];
+    const motion = matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in window;
+    if (!motion) {
+      targets.forEach((el) => el.classList.add('in'));
+      return;
+    }
+    try {
+      await Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]);
+      headings = [...document.querySelectorAll<HTMLElement>(HEADINGS)];
+      headings.forEach(splitLines);
+      scrubs = [...document.querySelectorAll<HTMLElement>('.mission .statement')];
+      scrubs.forEach(splitWords);
+      photos = [...document.querySelectorAll<HTMLImageElement>('.ph:not(.ph-cad) img')];
+      const counters = prepCounters(document);
+
+      io = new IntersectionObserver(
+        (entries) => {
+          // Light stagger for items that enter together, capped so a fast scroll never queues long delays.
+          entries
+            .filter((e) => e.isIntersecting)
+            .sort(
+              (a, b) =>
+                a.boundingClientRect.top - b.boundingClientRect.top ||
+                a.boundingClientRect.left - b.boundingClientRect.left
+            )
+            .forEach((e, i) => {
+              (e.target as HTMLElement).style.setProperty('--d', `${Math.min(i * 80, 320)}ms`);
+              e.target.classList.add('in');
+              io?.unobserve(e.target);
+            });
+        },
+        { rootMargin: '0px 0px -8% 0px', threshold: 0.1 }
+      );
+      targets.forEach((el) => io?.observe(el));
+
+      countIo = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (!e.isIntersecting) return;
+            countIo?.unobserve(e.target);
+            setTimeout(() => countUp(e.target as HTMLElement), 250);
+          }),
+        { threshold: 0.6 }
+      );
+      counters.forEach((el) => countIo?.observe(el));
+      queue();
+    } catch {
+      // Never leave content hidden.
+      targets.forEach((el) => el.classList.add('in'));
+    }
+  }
+
+  let resizeTimer: number | undefined;
+  addEventListener('scroll', queue, { passive: true });
+  addEventListener('resize', () => {
+    queue();
+    clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      // Line breaks depend on width, so rebuild any heading whose width changed.
+      headings
+        .filter((h) => h.isConnected && String(Math.round(h.getBoundingClientRect().width)) !== h.dataset.w)
+        .forEach(splitLines);
+    }, 250);
+  });
+  document.addEventListener('astro:page-load', init);
+</script>

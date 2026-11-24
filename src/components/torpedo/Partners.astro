@@ -57,10 +57,26 @@ import { partners } from '~/site';
   }
   li a {
     padding: 0.75rem;
-    transition: opacity 0.15s;
+    min-height: 2.75rem;
   }
-  li a:hover {
-    opacity: 0.65;
+  /* Logos sit in grey until hovered or focused; touch screens always show colour. */
+  @media (hover: hover) {
+    img {
+      filter: grayscale(1);
+      opacity: 0.75;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      img {
+        transition:
+          filter 0.4s,
+          opacity 0.4s;
+      }
+    }
+    a:hover img,
+    a:focus-visible img {
+      filter: none;
+      opacity: 1;
+    }
   }
   img {
     height: auto;

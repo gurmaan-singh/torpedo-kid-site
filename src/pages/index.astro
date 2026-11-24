@@ -33,7 +33,7 @@ const structuredData = [
   <StructuredData slot="head" schema={structuredData} />
 
   <section class="hero">
-    <div class="wrap hero-copy">
+    <div class="wrap hero-copy" style="animation-timeline: scroll(root); animation-range: 0 90vh">
       <p class="kicker">History reimagined</p>
       <h1 class="display">Bringing an electric pioneer back to life.</h1>
       <a class="cta" href="#about">About the project</a>
@@ -137,7 +137,7 @@ const structuredData = [
   .road {
     display: flex;
     justify-content: flex-end;
-    padding-right: 2vw;
+    padding: 0 2vw 1.5rem 0;
   }
   .roll-in {
     width: calc(var(--car) * 1vw);
@@ -196,6 +196,27 @@ const structuredData = [
       .road :global(.wheel-scroll) {
         animation: wheel-off linear both;
       }
+      /* The headline lags the page a little as you scroll. */
+      .hero-copy {
+        animation: lag linear both;
+      }
+    }
+    /* No scroll timelines (Firefox, older Safari): Reveal.astro sets --hp (0 to 1) on .hero instead. */
+    @supports not (animation-timeline: scroll()) {
+      .drive-off {
+        transform: translateX(calc(var(--hp, 0) * var(--out) * 1vw));
+      }
+      .road :global(.wheel-scroll) {
+        transform: rotate(calc(var(--hp, 0) * var(--out) / var(--r) * 1rad));
+      }
+      .hero-copy {
+        transform: translateY(calc(var(--hp, 0) * 14vh));
+      }
+    }
+  }
+  @keyframes lag {
+    to {
+      transform: translateY(14vh);
     }
   }
   @keyframes roll-in {

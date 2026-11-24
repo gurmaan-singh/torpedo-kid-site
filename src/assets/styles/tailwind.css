@@ -1,5 +1,14 @@
 @import 'tailwindcss';
 
+/* Template widgets, blog and demo posts are not used by this site: keep their classes out of the build. */
+@source not "../../components/widgets";
+@source not "../../components/blog";
+@source not "../../data";
+@source not "../../pages/[...blog]";
+@source not "../../layouts/LandingLayout.astro";
+@source not "../../layouts/MarkdownLayout.astro";
+@source not "../../navigation.ts";
+
 @plugin "@tailwindcss/typography";
 
 /* shadcn/ui-compatible tokens derived from the --aw-* variables. */
