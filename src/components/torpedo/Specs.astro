@@ -1,0 +1,31 @@
+---
+import { specs } from '~/car';
+---
+
+<dl>
+  {
+    specs.map(([k, v]) => (
+      <div>
+        <dt>{k}</dt>
+        <dd>{v}</dd>
+      </div>
+    ))
+  }
+</dl>
+
+<style>
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+    gap: 1.5rem 2rem;
+  }
+  dt {
+    color: var(--burgundy);
+  }
+  dd {
+    color: var(--charcoal);
+    font-size: 1.25rem;
+    line-height: 1.3;
+    margin: 0.15rem 0 0;
+  }
+</style>

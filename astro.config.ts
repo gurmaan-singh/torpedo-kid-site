@@ -33,15 +33,23 @@ export default defineConfig({
     defaultStrategy: 'viewport',
   },
 
-  // Native Fonts API: self-hosts + subsets + preloads Inter and generates
-  // metric-adjusted fallbacks. Injected via <Font /> in Layout.astro and
-  // consumed through the `--font-inter` CSS variable in CustomStyles.astro.
+  // Native Fonts API: self-hosted, subset and preloaded. Besley (a Clarendon)
+  // sets headlines, Familjen Grotesk sets everything else.
   fonts: [
     {
       provider: fontProviders.fontsource(),
-      name: 'Inter',
-      cssVariable: '--font-inter',
-      weights: ['100 900'],
+      name: 'Besley',
+      cssVariable: '--font-besley',
+      weights: ['400 900'],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['Georgia', 'serif'],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Familjen Grotesk',
+      cssVariable: '--font-familjen',
+      weights: ['400 700'],
       styles: ['normal'],
       subsets: ['latin'],
       fallbacks: ['sans-serif'],

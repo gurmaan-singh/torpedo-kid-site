@@ -1,14 +1,14 @@
 ---
 // Font family is provided by Astro's native Fonts API (see `fonts` in
-// astro.config.ts and <Font /> in Layout.astro), exposed as `--font-inter`.
+// astro.config.ts and <Font /> in Layout.astro), exposed as `--font-besley` / `--font-familjen`.
 // To switch typefaces, change the `fonts` entry and repoint `--aw-font-*` below.
 ---
 
 <style is:inline>
   :root {
-    --aw-font-sans: var(--font-inter);
-    --aw-font-serif: var(--font-inter);
-    --aw-font-heading: var(--font-inter);
+    --aw-font-sans: var(--font-familjen);
+    --aw-font-serif: var(--font-besley);
+    --aw-font-heading: var(--font-besley);
 
         /* Brand colors */
     --aw-color-primary: rgb(165 138 92);
@@ -29,9 +29,9 @@
   }
 
   .dark {
-    --aw-font-sans: var(--font-inter);
-    --aw-font-serif: var(--font-inter);
-    --aw-font-heading: var(--font-inter);
+    --aw-font-sans: var(--font-familjen);
+    --aw-font-serif: var(--font-besley);
+    --aw-font-heading: var(--font-besley);
 
     /* Brand colors */
     --aw-color-primary: rgb(197 169 121);

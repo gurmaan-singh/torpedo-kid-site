@@ -28,6 +28,10 @@ export default ({ config: _themeConfig = 'src/config.yaml' } = {}): AstroIntegra
         const rawJsonConfig = (await loadConfig(_themeConfig)) as Config;
         const { SITE, I18N, METADATA, APP_BLOG, UI, ANALYTICS } = configBuilder(rawJsonConfig);
 
+        // Hosts that serve the site from another address (GitHub Pages) set these.
+        if (process.env.SITE_URL) SITE.site = process.env.SITE_URL;
+        if (process.env.BASE_PATH) SITE.base = process.env.BASE_PATH;
+
         updateConfig({
           site: SITE.site,
           base: SITE.base,
@@ -94,7 +98,7 @@ export default ({ config: _themeConfig = 'src/config.yaml' } = {}): AstroIntegra
 
           if (hasIntegration && sitemapExists) {
             const robotsTxt = fs.readFileSync(robotsTxtFile, { encoding: 'utf8', flag: 'a+' });
-            const sitemapUrl = new URL(sitemapName, String(new URL(cfg.base, cfg.site)));
+            const sitemapUrl = new URL(sitemapName, String(new URL(cfg.base.replace(/\/?$/, '/'), cfg.site)));
             const pattern = /^Sitemap:(.*)$/m;
 
             if (!pattern.test(robotsTxt)) {

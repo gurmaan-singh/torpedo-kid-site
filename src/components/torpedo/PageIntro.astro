@@ -1,0 +1,30 @@
+---
+export interface Props {
+  title: string;
+  lead?: string;
+}
+const { title, lead } = Astro.props;
+---
+
+<section class="intro">
+  <div class="wrap">
+    <h1 class="display">{title}</h1>
+    {lead && <p class="lead">{lead}</p>}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .intro {
+    background: var(--charcoal);
+    color: var(--cream);
+    padding-block: clamp(3rem, 7vw, 6rem) clamp(3.5rem, 7vw, 6rem);
+  }
+  h1 {
+    max-width: 18ch;
+  }
+  .lead {
+    color: var(--light-text);
+    margin-top: 1.5rem;
+  }
+</style>

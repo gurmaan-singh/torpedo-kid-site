@@ -1,0 +1,24 @@
+---
+import { BODY, REAR_X, FRONT_X } from './carGeometry';
+---
+
+<svg class="mark" viewBox="0 110 1200 320" aria-hidden="true">
+  <path d={BODY} fill="currentColor"></path>
+  {
+    [REAR_X, FRONT_X].map((x) => (
+      <>
+        <circle cx={x} cy="318" r="112" fill="var(--mark-bg)" />
+        <circle cx={x} cy="318" r="88" fill="currentColor" />
+        <circle cx={x} cy="318" r="22" fill="var(--mark-bg)" />
+      </>
+    ))
+  }
+</svg>
+
+<style>
+  .mark {
+    width: 3.25rem;
+    height: auto;
+    flex: none;
+  }
+</style>

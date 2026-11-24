@@ -1,0 +1,70 @@
+---
+import { partners } from '~/site';
+---
+
+<ul class="partners">
+  {
+    partners.map((p) => {
+      const mark = p.logo ? (
+        <img
+          src={p.logo.src}
+          width={p.logo.width}
+          height={p.logo.height}
+          alt={p.name}
+          style={`--h: ${p.height ?? 3}rem`}
+          loading="lazy"
+        />
+      ) : (
+        <span class="text-mark">{p.name}</span>
+      );
+      return (
+        <li>
+          {p.href ? (
+            <a href={p.href} target="_blank" rel="noopener noreferrer">
+              {mark}
+            </a>
+          ) : (
+            mark
+          )}
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  .partners {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(2.5rem, 5vw, 4.5rem) clamp(2rem, 6vw, 6rem);
+    align-items: center;
+  }
+  @media (min-width: 48rem) {
+    .partners {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  li,
+  li a {
+    display: grid;
+    place-items: center;
+  }
+  li a {
+    padding: 0.75rem;
+    transition: opacity 0.15s;
+  }
+  li a:hover {
+    opacity: 0.65;
+  }
+  img {
+    height: auto;
+    max-height: var(--h);
+    width: auto;
+    max-width: 100%;
+  }
+  .text-mark {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+    font-weight: 600;
+    color: var(--charcoal);
+  }
+</style>

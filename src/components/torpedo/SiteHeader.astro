@@ -1,0 +1,132 @@
+---
+import { Icon } from 'astro-icon/components';
+import Mark from './Mark.astro';
+import { nav } from '~/site';
+
+const here = Astro.url.pathname.replace(/(\.html)?\/?$/, '') || '/';
+const current = (href: string) => ((href.replace(/\/$/, '') || '/') === here ? 'page' : undefined);
+---
+
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href={nav[0].href}><Mark /><span>TorpedoKid</span></a>
+    <nav class="desktop" aria-label="Main">
+      {
+        nav.map((l) => (
+          <a href={l.href} aria-current={current(l.href)}>
+            {l.text}
+          </a>
+        ))
+      }
+    </nav>
+    <details class="mobile">
+      <summary aria-label="Menu">
+        <Icon name="tabler:menu-2" class="open" />
+        <Icon name="tabler:x" class="close" />
+      </summary>
+      <nav aria-label="Main">
+        {
+          nav.map((l) => (
+            <a href={l.href} aria-current={current(l.href)}>
+              {l.text}
+            </a>
+          ))
+        }
+      </nav>
+    </details>
+  </div>
+</header>
+
+<style>
+  .skip {
+    position: absolute;
+    left: 1rem;
+    top: -6rem;
+    z-index: 60;
+    background: var(--white);
+    color: var(--charcoal);
+    padding: 0.75rem 1rem;
+  }
+  .skip:focus {
+    top: 1rem;
+  }
+  .site-header {
+    --mark-bg: var(--charcoal);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--charcoal);
+    color: var(--cream);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 4.5rem;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding-block: 0.5rem;
+  }
+  nav a {
+    color: var(--light-text);
+  }
+  nav a:hover,
+  nav a[aria-current] {
+    color: var(--light-brass);
+  }
+  .desktop {
+    display: flex;
+    gap: 2.25rem;
+  }
+  .desktop a {
+    padding-block: 0.75rem;
+  }
+  .mobile {
+    display: none;
+  }
+  summary {
+    list-style: none;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin-right: -0.75rem;
+    cursor: pointer;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  summary :global(svg) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  details[open] summary :global(.open),
+  details:not([open]) summary :global(.close) {
+    display: none;
+  }
+  .mobile nav {
+    position: absolute;
+    inset: 100% 0 auto;
+    background: var(--charcoal);
+    padding: 0.5rem var(--gutter) 2rem;
+    display: grid;
+  }
+  .mobile nav a {
+    font-size: 1.5rem;
+    padding-block: 0.75rem;
+  }
+  @media (max-width: 47.99rem) {
+    .desktop {
+      display: none;
+    }
+    .mobile {
+      display: block;
+    }
+  }
+</style>

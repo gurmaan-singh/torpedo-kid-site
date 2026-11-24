@@ -1,0 +1,68 @@
+---
+import { BODY, UNDERSIDE, WHEEL_R, WHEEL_Y, REAR_X, FRONT_X } from './carGeometry';
+
+export interface Props {
+  class?: string;
+  label?: string;
+}
+const { class: className, label = 'Side view of the Torpedo Kid, the white electric racer numbered 999' } = Astro.props;
+---
+
+<svg class:list={['car', className]} viewBox="0 0 1200 430" role="img" aria-label={label}>
+  <g>
+    <!-- Driver: bareheaded with a moustache, like Baker at Glenville -->
+    <path d="M474 176 C474 138 490 124 522 124 C552 124 566 140 566 176 Z" fill="#8c3830"></path>
+    <path
+      d="M492 94 C490 62 512 48 534 50 C558 52 568 68 566 86 L573 99 L565 102 L564 116 C560 130 540 134 524 130 L500 130 Z"
+      fill="#d9c9ab"></path>
+    <path
+      d="M489 102 C480 62 506 42 534 45 C552 46 564 54 567 70 C548 64 536 68 526 70 C518 80 516 92 510 104 C504 112 494 112 489 102 Z"
+      fill="#171816"></path>
+    <path d="M542 106 C552 100 566 101 572 110 C562 114 550 114 542 106 Z" fill="#171816"></path>
+    <path d={BODY} fill="#f3f0e8"></path>
+    <path d={UNDERSIDE} fill="#d9d5cc"></path>
+    <!-- Cockpit edge and body seams -->
+    <path d="M450 156 C490 148 550 146 596 149" fill="none" stroke="#494a44" stroke-width="10" stroke-linecap="round"
+    ></path>
+    <path
+      d="M690 152 C712 220 712 300 700 364 M430 157 C410 220 408 300 416 360"
+      fill="none"
+      stroke="#c9c4b8"
+      stroke-width="3"></path>
+    <text x="566" y="322" text-anchor="middle" class="num">999</text>
+  </g>
+  {
+    [REAR_X, FRONT_X].map((x) => (
+      <g transform={`translate(${x} ${WHEEL_Y})`}>
+        <g class="wheel-intro">
+          <g class="wheel-scroll" style="animation-timeline: scroll(root); animation-range: 0 90vh">
+            <circle r={WHEEL_R - 1} fill="#171816" stroke="#69665d" stroke-width="2" />
+            <circle r="92" fill="#e8e3d8" />
+            <path d="M0 0 L92 0 A92 92 0 0 1 46 79.7 Z" fill="#d9d5cc" />
+            <path d="M0 0 L-92 0 A92 92 0 0 1 -46 -79.7 Z" fill="#f3f0e8" />
+            {[0, 60, 120, 180, 240, 300].map((a) => (
+              <circle r="3.5" cx="80" transform={`rotate(${a})`} fill="#77756e" />
+            ))}
+            <circle r="13" fill="#a58a5c" />
+            <circle r="5" fill="#252724" />
+          </g>
+        </g>
+      </g>
+    ))
+  }
+</svg>
+
+<style>
+  .car {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .num {
+    font-family: var(--font-besley), serif;
+    font-size: 112px;
+    font-weight: 500;
+    fill: #252724;
+  }
+</style>

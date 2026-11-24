@@ -1,0 +1,93 @@
+---
+import { Icon } from 'astro-icon/components';
+import Mark from './Mark.astro';
+import { contact, mailto, nav } from '~/site';
+
+const social = [
+  { label: 'Instagram', icon: 'tabler:brand-instagram', href: contact.instagram },
+  { label: 'LinkedIn', icon: 'tabler:brand-linkedin', href: contact.linkedin },
+  { label: 'Email', icon: 'tabler:mail', href: mailto() },
+];
+---
+
+<footer>
+  <div class="wrap inner">
+    <a class="brand" href={nav[0].href}><Mark /><span>TorpedoKid</span></a>
+    <nav aria-label="Footer">{nav.map((l) => <a href={l.href}>{l.text}</a>)}</nav>
+    <ul>
+      {
+        social.map((s) => (
+          <li>
+            <a
+              href={s.href}
+              aria-label={s.label}
+              {...(s.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              <Icon name={s.icon} />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p>A student project at Fontys Technology.</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    --mark-bg: var(--warm-grey);
+    background: var(--warm-grey);
+    color: var(--charcoal);
+  }
+  .inner {
+    display: grid;
+    justify-items: center;
+    gap: 1.75rem;
+    padding-block: 3.5rem 3rem;
+    text-align: center;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.375rem;
+    font-weight: 600;
+  }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 2rem;
+  }
+  nav a {
+    padding-block: 0.5rem;
+  }
+  nav a:hover {
+    color: var(--burgundy);
+  }
+  ul {
+    display: flex;
+    gap: 1rem;
+  }
+  /* Disc wheels, like the car: dark tyre, pale disc */
+  li a {
+    display: grid;
+    place-items: center;
+    width: 3.75rem;
+    height: 3.75rem;
+    border-radius: 50%;
+    border: 6px solid var(--charcoal);
+    background: var(--cream);
+  }
+  li a:hover {
+    background: var(--burgundy);
+    color: var(--white);
+  }
+  li :global(svg) {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  p {
+    color: var(--graphite);
+  }
+</style>
